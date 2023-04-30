@@ -13,20 +13,28 @@ jobs:
       uses: actions/checkout@v2
       with:
         persist-credentials: false
+    
     - name: Build to tests stage
       uses: docker/build-push-action@v3
       with:
         tags: addertests:latest   
         target: test              
+    
     - name: Copy JUnit test file
       run: |
         id=$(docker create addertests:latest)
         docker cp $id:/app/target/nextest/ci/testresults.xml .
         docker rm $id
+    
     - name: Publish test results
-      uses: EnricoMi/publish-unit-test-result-action@v1
+      uses: EnricoMi/publish-unit-test-result-action@v2
+      if: always()
       with:
-        files: "testresults.xml"
+        files: testresults.xml
+      permissions:
+        checks: write
+        pull-requests: write
+    
     - name: Build final Docker image
       uses: docker/build-push-action@v3
       with:
